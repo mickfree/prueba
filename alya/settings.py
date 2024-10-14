@@ -8,10 +8,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
-
+# DEBUG = 'RENDER' not in os.environ
+DEBUG = FALSE
 # Define ALLOWED_HOSTS primero
-ALLOWED_HOSTS = ['*', 'alya-production.up.railway.app']
+ALLOWED_HOSTS = ['*', 'web-production-a700f.up.railway.app']
 
 load_dotenv()
 
@@ -148,8 +148,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CRFS_TRUSTED_ORIGINS = ['https://*']
-
+CRFS_TRUSTED_ORIGINS = ['https://*','https://web-production-a700f.up.railway.app']
 
 
 #SETTINGS login accounts
