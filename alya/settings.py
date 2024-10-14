@@ -2,21 +2,17 @@ import dj_database_url
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = 'RENDER' not in os.environ
+DEBUG = False
 
-# Define ALLOWED_HOSTS primero
 ALLOWED_HOSTS = ['*', 'alya-production.up.railway.app']
-
-load_dotenv()
-
-# Luego agrega RENDER_EXTERNAL_HOSTNAME si está definido
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +49,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'logistic_requirements',
     'logistic_suppliers',
+    'logistic_api',
     'requests',
     'whitenoise.runserver_nostatic',
 ]
@@ -91,16 +88,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'alya.wsgi.application'
 
-# DATABASES = {
-#     'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',  # Ajusta el nombre de la base de datos según sea necesario
+        'NAME': BASE_DIR / "db.sqlite3",
     }
 }
+
+
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -148,7 +145,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CRFS_TRUSTED_ORIGINS = ['https://*']
+CSRF_TRUSTED_ORIGINS = ['http://*','https://alya-production.up.railway.app']
 
 
 

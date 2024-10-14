@@ -1,12 +1,13 @@
 from django.contrib import messages
-from django.db import models
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from collections import defaultdict
 from .forms import BudgetForm, BudgetItemFormSet, CatalogItemForm, SearchCatalogItemForm
 from .models import Budget, BudgetItem, CatalogItem
 from .utils import export_budget_report_to_excel
-
+from accounting_order_sales.models import SalesOrder, SalesOrderItem
+from django.http import HttpResponse
+from django.contrib import messages
 from alya import utils
 
 
@@ -112,7 +113,35 @@ def duplicate_budget(request, pk):
     # Redirigir a la vista de detalle del nuevo presupuesto
     return redirect('detail_budget', pk=duplicated_budget.pk)
 
-
+def create_sales_order_from_budget(request, budget_id):
+    # Obtener el presupuesto seleccionado
+    budget = get_object_or_404(Budget, id=budget_id)
+    
+    # Crear la orden de venta con los datos básicos, dejando 'project' como null inicialmente y sapcode="000"
+    sales_order = SalesOrder.objects.create(
+        sapcode=0,  # Valor por defecto (SAP 000)
+        project=None,  # Proyecto nulo, será agregado más tarde
+        detail=f"Orden basada en el presupuesto {budget.budget_name}",
+        date=budget.budget_date,
+    )
+    
+    # Iterar sobre los items del presupuesto y crear items de la orden de venta
+    for budget_item in budget.items.all():
+        SalesOrderItem.objects.create(
+            salesorder=sales_order,
+            sap_code=budget_item.item.sap,
+            description=budget_item.item.description,
+            amount=budget_item.quantity,
+            price=budget_item.item.price,  # Precio unitario
+            price_total=budget_item.total_price,  # Precio total
+            unit_of_measurement=budget_item.item.unit,
+        )
+    
+    # Agregar un mensaje de éxito
+    messages.success(request, f"La orden de venta {sales_order.sapcode} fue creada exitosamente.")
+    
+    # Redirigir a la vista principal de presupuestos
+    return redirect('index_budget')
 
 def export_budget_report(request, pk):
     return export_budget_report_to_excel(request, pk)
@@ -137,7 +166,7 @@ def catalog(request):
         'catalogs': catalogs,
     }
 
-    return render(request, 'catalog/catalog.html', context)
+    return render(request, 'catalog/home.html', context)
 
 def catalog_edit(request, catalog_id):
     catalog = get_object_or_404(CatalogItem, id=catalog_id)
@@ -146,14 +175,14 @@ def catalog_edit(request, catalog_id):
         form = CatalogItemForm(request.POST, instance=catalog)
         if form.is_valid():
             form.save()
-            # Después de guardar, renderizar la lista completa de ítems
+            # Después de guardar, renderizar el lista ítem
             catalog = get_object_or_404(CatalogItem, id=catalog_id)
-            return render(request, 'catalog/catalog_list_element.html', {'catalog': catalog})
-
+            return render(request, 'catalog/list_element.html', {'catalog': catalog})
     else:
         form = CatalogItemForm(instance=catalog)
 
-    return render(request, 'catalog/catalog_edit.html', {'form': form, 'catalog': catalog})
+    context = {'form': form, 'catalog': catalog}
+    return render(request, 'catalog/edit.html', context)
 
 def catalog_new(request):
     context = {}
@@ -167,7 +196,7 @@ def catalog_new(request):
 
     context['form'] = CatalogItemForm()
 
-    return render(request, 'catalog/catalog_form.html', context)
+    return render(request, 'catalog/form.html', context)
 
 def catalog_search(request):
     context = {}
@@ -176,11 +205,25 @@ def catalog_search(request):
         if form.is_valid():
 
             # Search catalogs
-            status, catalogs = utils.search_model(CatalogItem.objects.all(), 'sap', form.cleaned_data['sap'], accept_all=True)
-            if catalogs != {} :
-                catalogs = catalogs.order_by('sap')
+            if form.cleaned_data['sap'] and not form.cleaned_data['description'] :
+                # Only SAP
+                status, catalogs = utils.search_model(CatalogItem.objects.all(), 'sap', form.cleaned_data['sap'], accept_all=True)
+            elif form.cleaned_data['sap'] and form.cleaned_data['description'] :
+                # SAP and description
+                status, catalogs = utils.search_model(CatalogItem.objects.all(), 'sap', form.cleaned_data['sap'], accept_all=True)
+                status, catalogs = utils.search_model(catalogs, 'description', form.cleaned_data['description'], accept_all=True)
+            elif form.cleaned_data['description']:
+                # Only description
+                status, catalogs = utils.search_model(CatalogItem.objects.all(), 'description', form.cleaned_data['description'], accept_all=True)
+            else :
+                # Item
+                catalogs = CatalogItem.objects.all()
+                status = 0
+
+            # Sort
+            catalogs = catalogs.order_by('sap')
 
             context['catalogs'] = catalogs
             context['search_status'] = status
     context['search'] = SearchCatalogItemForm()
-    return render(request, 'catalog/catalog_list.html', context)
+    return render(request, 'catalog/list.html', context)
