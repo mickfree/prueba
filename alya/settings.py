@@ -12,7 +12,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', default='your secret key')
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['*', 'alya-production.up.railway.app']
+ALLOWED_HOSTS = ['*', 'web-production-a700f.up.railway.app']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -145,7 +145,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = ['http://*','https://alya-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['http://*','https://web-production-a700f.up.railway.app']
 
 
 
