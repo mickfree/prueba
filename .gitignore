@@ -3,6 +3,9 @@ venv
 __pycache__
 db.sqlite3
 *.pdf
-**/00*.py
+**/migrations/*
+!**/migrations/__init__.py
+*/migrations/*.py
 staticfiles
 .env
+static
