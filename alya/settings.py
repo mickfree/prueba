@@ -2,7 +2,6 @@ import dj_database_url
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import dj_database_url
 
 load_dotenv()
 
@@ -88,14 +87,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'alya.wsgi.application'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / "db.sqlite3",
+#     }
+# }
+
+print(os.getenv('DATABASE_URL'))
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
 }
-
-
 
 
 
